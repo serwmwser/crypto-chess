@@ -7,6 +7,7 @@ const PIECES = {
 export default function Board({ board, myColor, selected, targets, onSquare, disabled }) {
   const files = "abcdefgh";
   const display = myColor === "w" ? board : [...board].reverse();
+  
   return (
     <div className={`board ${disabled ? "board-disabled" : ""}`}>
       {display.map((row, r) => {
@@ -23,12 +24,14 @@ export default function Board({ board, myColor, selected, targets, onSquare, dis
               const isSel = selected === square;
               const isTarget = targets.includes(square);
               const label = files[file] + rank;
+              
               return (
                 <button
                   key={square}
                   className={`cell ${dark ? "dark" : "light"} ${isSel ? "sel" : ""}`}
                   onClick={() => onSquare(square)}
                   aria-label={label}
+                  disabled={disabled}
                 >
                   {piece ? (
                     <span className={piece.color === "w" ? "pw" : "pb"}>
