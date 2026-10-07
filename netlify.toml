@@ -1,0 +1,2 @@
+toml [build] command = "npm install --include=dev && npm run build" publish = "dist" [build.environment] NODE_VERSION = "20" # SPA: все пути отдаём через index.html [[redirects]] from = "/*" to = "/index.html" status = 200 
+Обновления PWA должны приходить сразу [[headers]] for = "/sw.js" [headers.values] Cache-Control = "no-cache"
