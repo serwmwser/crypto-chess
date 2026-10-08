@@ -1,19 +1,7 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.20;
 
-/**
- * @title ChessEscrow
- * @notice Escrow-контракт для шахматных матчей со ставками в BEP-20 токене.
- *
- *  - Игрок-создатель открывает матч, внося ставку (>= 50 000 токенов).
- *  - Вызовшийся игрок вносит ставку не меньше ставки создателя — матч активен.
- *  - Результат (resign, время истекло -> проигравший подтверждает, ничья):
- *      победителю  -> 100% - feeBps
- *      feeRecipient -> feeBps (5% = 500 bps)
- *
- * Деплой: ChessEscrow(token, feeBps=500, feeRecipient=0xc2e5650f84Eeb9e4011afbb398108ea302cB17A6)
- * Токен:  0x62a3e247e28cad2d2902cd2dc2e6aea7cdd14444 (BNB Smart Chain, 0% комиссии)
- */
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 interface IERC20 {
     function balanceOf(address account) external view returns (uint256);
@@ -22,7 +10,10 @@ interface IERC20 {
     function decimals() external view returns (uint8);
 }
 
-contract ChessEscrow {
+/// @notice Шахматные матчи со ставками в USDC (Polygon).
+/// Ставки: 10¢...$10 шаг 10¢. Комиссия feeBps -> feeRecipient.
+/// Комиссия, кошелёк и ставки меняются владельцем без передеплоя.
+contract ChessEscrow is Ownable {
     enum Status { Open, Active, Settled, Draw }
 
     struct Game {
@@ -31,18 +22,20 @@ contract ChessEscrow {
         uint256 stakeCreator;
         uint256 stakeChallenger;
         uint32 createdAt;
-        uint32 startedAt;   // timestamp, когда второй игрок присоединился
-        uint32 duration;    // длительность партии в секундах
+        uint32 startedAt;
+        uint32 duration;
         uint8 status;
-        address winner;     // 0 при отмене/ничьей
+        address winner;
         bool creatorDraw;
         bool challengerDraw;
     }
 
     IERC20 public immutable token;
-    uint16 public immutable feeBps;
-    address public immutable feeRecipient;
-    uint256 public minStake;
+    uint16 public feeBps;
+    address public feeRecipient;
+
+    mapping(uint256 => bool) public allowedStakes;
+    uint256[] public stakeTiers;
 
     Game[] private _games;
     uint256 public totalGames;
@@ -53,59 +46,102 @@ contract ChessEscrow {
     event Resigned(uint256 indexed id, address indexed resigner, address indexed winner);
     event DrawAgreed(uint256 indexed id, address indexed by);
     event DrawSettled(uint256 indexed id, uint256 payoutEach);
+    event FeeChanged(uint16 oldFee, uint16 newFee);
+    event FeeRecipientChanged(address indexed newRecipient);
+    event TierAdded(uint256 stake);
+    event TierRemoved(uint256 stake);
 
     modifier exists(uint256 id) {
         require(id < totalGames, "no game");
         _;
     }
 
-    constructor(IERC20 _token, uint16 _feeBps, address _feeRecipient) {
+    constructor(IERC20 _token, uint16 _feeBps, address _feeRecipient) Ownable(msg.sender) {
         require(address(_token) != address(0), "zero token");
         require(_feeRecipient != address(0), "zero recipient");
         require(_feeBps <= 1000, "fee > 10%");
-        uint256 d = _token.decimals();
-        require(d >= 1 && d <= 18, "bad decimals");
         token = _token;
         feeBps = _feeBps;
         feeRecipient = _feeRecipient;
-        minStake = 50_000 * (10 ** d);
+
+        uint256 unit = 10 ** uint256(_token.decimals());
+        for (uint256 c = 10; c <= 1000; c += 10) {
+            _addTier((c * unit) / 100);
+        }
     }
 
-    /// @notice Открыть матч. Длительность: 900 / 1800 / 3600 / 86400 секунд.
+    function setFeeBps(uint16 newFee) external onlyOwner {
+        require(newFee <= 1000, "fee > 10%");
+        emit FeeChanged(feeBps, newFee);
+        feeBps = newFee;
+    }
+
+    function setFeeRecipient(address newRecipient) external onlyOwner {
+        require(newRecipient != address(0), "zero recipient");
+        feeRecipient = newRecipient;
+        emit FeeRecipientChanged(newRecipient);
+    }
+
+    function addTier(uint256 stake) external onlyOwner {
+        _addTier(stake);
+    }
+
+    function removeTier(uint256 stake) external onlyOwner {
+        require(allowedStakes[stake], "no tier");
+        allowedStakes[stake] = false;
+        for (uint256 i = 0; i < stakeTiers.length; i++) {
+            if (stakeTiers[i] == stake) {
+                stakeTiers[i] = stakeTiers[stakeTiers.length - 1];
+                stakeTiers.pop();
+                break;
+            }
+        }
+        emit TierRemoved(stake);
+    }
+
+    function _addTier(uint256 stake) internal {
+        require(stake > 0, "zero stake");
+        require(!allowedStakes[stake], "exists");
+        allowedStakes[stake] = true;
+        stakeTiers.push(stake);
+        emit TierAdded(stake);
+    }
+
+    function getStakeTiers() external view returns (uint256[] memory) {
+        return stakeTiers;
+    }
+
     function createGame(uint256 stake, uint32 duration) external returns (uint256 id) {
-        require(stake >= minStake, "min stake 50k");
+        require(allowedStakes[stake], "stake not in tiers");
         require(
             duration == 900 || duration == 1800 || duration == 3600 || duration == 86_400,
             "duration 15m/30m/1h/24h"
         );
         id = _games.length;
-        _games.push(
-            Game({
-                creator: msg.sender,
-                challenger: address(0),
-                stakeCreator: stake,
-                stakeChallenger: 0,
-                createdAt: uint32(block.timestamp),
-                startedAt: 0,
-                duration: duration,
-                status: uint8(Status.Open),
-                winner: address(0),
-                creatorDraw: false,
-                challengerDraw: false
-            })
-        );
+        _games.push(Game({
+            creator: msg.sender,
+            challenger: address(0),
+            stakeCreator: stake,
+            stakeChallenger: 0,
+            createdAt: uint32(block.timestamp),
+            startedAt: 0,
+            duration: duration,
+            status: uint8(Status.Open),
+            winner: address(0),
+            creatorDraw: false,
+            challengerDraw: false
+        }));
         totalGames = _games.length;
         require(_safeTransferFrom(msg.sender, stake), "approve token");
         emit GameCreated(id, msg.sender, stake, duration);
         return id;
     }
 
-    /// @notice Присоединиться к матчу со ставкой не меньше ставки создателя.
     function joinGame(uint256 id, uint256 stake) external exists(id) {
         Game storage g = _games[id];
         require(g.status == uint8(Status.Open), "not open");
         require(msg.sender != g.creator, "self join");
-        require(stake >= g.stakeCreator, "stake too low");
+        require(stake == g.stakeCreator, "stake mismatch");
         require(_safeTransferFrom(msg.sender, stake), "approve token");
         g.challenger = msg.sender;
         g.stakeChallenger = stake;
@@ -114,7 +150,6 @@ contract ChessEscrow {
         emit GameJoined(id, msg.sender, stake, g.startedAt);
     }
 
-    /// @notice Создатель может отменить матч до подключения соперника.
     function cancelGame(uint256 id) external exists(id) {
         Game storage g = _games[id];
         require(g.status == uint8(Status.Open), "not open");
@@ -124,8 +159,6 @@ contract ChessEscrow {
         emit GameCancelled(id);
     }
 
-    /// @notice Сдача партии (по желанию или из-за истечения времени).
-    ///        Проигравший вызывает функцию; победитель получает 100% - feeBps.
     function resign(uint256 id) external exists(id) {
         Game storage g = _games[id];
         require(g.status == uint8(Status.Active), "not active");
@@ -142,8 +175,6 @@ contract ChessEscrow {
         emit Resigned(id, msg.sender, winner);
     }
 
-    /// @notice Согласиться на ничью. Когда оба игрока согласны — ставки полностью
-    ///         возвращаются игрокам (по 50% каждого), комиссия при ничьей НЕ удерживается.
     function agreeDraw(uint256 id) external exists(id) {
         Game storage g = _games[id];
         require(g.status == uint8(Status.Active), "not active");
@@ -161,54 +192,15 @@ contract ChessEscrow {
             uint256 pot = g.stakeCreator + g.stakeChallenger;
             uint256 payoutEach = pot / 2;
             g.winner = address(0);
-            // При ничьей баланс возвращается игрокам, комиссия не удерживается
             _send(g.creator, payoutEach);
             _send(g.challenger, payoutEach);
             emit DrawSettled(id, payoutEach);
         }
     }
 
-    // ---------- views ----------
-
     function gameCount() external view returns (uint256) {
         return _games.length;
     }
-
-    function getGame(
-        uint256 id
-    )
-        external
-        view
-        exists(id)
-        returns (
-            address creator,
-            address challenger,
-            uint256 stakeCreator,
-            uint256 stakeChallenger,
-            uint32 startedAt,
-            uint32 duration,
-            uint8 status,
-            address winner,
-            bool creatorDraw,
-            bool challengerDraw
-        )
-    {
-        Game storage g = _games[id];
-        return (
-            g.creator,
-            g.challenger,
-            g.stakeCreator,
-            g.stakeChallenger,
-            g.startedAt,
-            g.duration,
-            g.status,
-            g.winner,
-            g.creatorDraw,
-            g.challengerDraw
-        );
-    }
-
-    // ---------- internals ----------
 
     function _fee(uint256 amount) internal view returns (uint256) {
         return (amount * feeBps) / 10_000;
