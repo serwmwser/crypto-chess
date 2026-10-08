@@ -1,4 +1,4 @@
-{
+{   "homepage": "https://serwmwser.github.io/crypto-chess",
   "name": "crypto-chess",
   "private": true,
   "version": "0.0.0",
@@ -7,6 +7,8 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview"
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d dist"
   },
   "dependencies": {
     "chess.js": "^1.0.0-beta.8",
@@ -24,6 +26,7 @@
     "@types/react-dom": "^18.2.19",
     "@vitejs/plugin-react": "^4.2.1",
     "dotenv": "^16.4.5",
+    "gh-pages": "^6.3.0",
     "hardhat": "^2.22.1",
     "vite": "^5.1.0"
   }
