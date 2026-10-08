@@ -1,15 +1,15 @@
 import { ethers } from 'ethers';
 import { config } from './config';
 
-// --- ABI ДЛЯ MOCK USDC (Упрощенный) ---
+// --- ABI ДЛЯ MOCK USDC ---
 const MOCK_USDC_ABI = [
   "function balanceOf(address account) view returns (uint256)",
   "function approve(address spender, uint256 amount) returns (bool)",
   "function decimals() view returns (uint8)",
-  "function faucet() external" // Функция для получения бесплатных токенов
+  "function faucet() external"
 ];
 
-// --- ABI ДЛЯ CHESS ESCROW (Твой контракт) ---
+// --- ABI ДЛЯ CHESS ESCROW ---
 const CHESS_ESCROW_ABI = [
   "function createGame(uint256 stake, uint32 duration) external returns (uint256)",
   "function joinGame(uint256 id, uint256 stake) external",
@@ -22,27 +22,25 @@ const CHESS_ESCROW_ABI = [
   "function getStakeTiers() view returns (uint256[])"
 ];
 
-// Инициализация провайдера (соединение с блокчейном)
 let provider = null;
 let signer = null;
+
+// Нулевой адрес (стандарт в Ethereum)
+export const ZERO_ADDR = "0x0000000000000000000000000000000000000000";
 
 // Функция подключения кошелька
 export const connectWallet = async () => {
   if (typeof window.ethereum !== 'undefined') {
     try {
-      // Запрашиваем подключение
       await window.ethereum.request({ method: 'eth_requestAccounts' });
-      
       provider = new ethers.BrowserProvider(window.ethereum);
       signer = await provider.getSigner();
       
-      // Проверяем сеть (должна быть 31337 для локалки)
       const network = await provider.getNetwork();
       if (Number(network.chainId) !== config.network.chainId) {
         alert(`Ошибка сети! Нужна сеть ID ${config.network.chainId}, а у вас ${network.chainId}. Переключите сеть в MetaMask.`);
         return null;
       }
-      
       return signer;
     } catch (error) {
       console.error("Ошибка подключения:", error);
@@ -59,7 +57,6 @@ export const connectWallet = async () => {
 export const getUSDCContract = async () => {
   if (!signer) await connectWallet();
   if (!signer) throw new Error("Кошелек не подключен");
-  
   return new ethers.Contract(config.contracts.usdc, MOCK_USDC_ABI, signer);
 };
 
@@ -67,15 +64,78 @@ export const getUSDCContract = async () => {
 export const getChessEscrowContract = async () => {
   if (!signer) await connectWallet();
   if (!signer) throw new Error("Кошелек не подключен");
-  
   return new ethers.Contract(config.contracts.chessEscrow, CHESS_ESCROW_ABI, signer);
 };
 
-// Helper: Конвертация USDC (6 знаков после запятой)
+// --- АЛИАСЫ И ФОРМАТИРОВАНИЕ ---
+
+export const getEscrow = async () => {
+  return getChessEscrowContract();
+};
+
+export const getEscrowView = async () => {
+  // Заглушка для view-контракта (используем provider без подписи)
+  if (!provider) await connectWallet();
+  return new ethers.Contract(config.contracts.chessEscrow, CHESS_ESCROW_ABI, provider);
+};
+
+export const getEscrowToken = async () => {
+  return getUSDCContract();
+};
+
+export const getToken = async () => {
+  return getUSDCContract();
+};
+
+export const getGameToken = async () => {
+  return getUSDCContract();
+};
+
+export const getCChessExchange = async () => {
+  return null; // Заглушка
+};
+
+export const getCChessExchangeView = async () => {
+  return null; // Заглушка
+};
+
 export const parseUSDC = (amount) => {
   return ethers.parseUnits(amount.toString(), 6);
 };
 
 export const formatUSDC = (wei) => {
   return ethers.formatUnits(wei, 6);
+};
+
+export const formatStake = (wei) => {
+  return formatUSDC(wei);
+};
+
+export const shortAddr = (addr) => {
+  if (!addr) return '';
+  return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
+};
+
+// --- ЗАГЛУШКИ ДЛЯ СБОРКИ (ЧТОБЫ VITE НЕ РУГАЛСЯ) ---
+
+export const fetchGames = async () => {
+  try {
+    return []; 
+  } catch (e) {
+    console.warn("Не удалось получить игры:", e);
+    return [];
+  }
+};
+
+export const escrowReady = async () => {
+  return true;
+};
+
+export const cchessReady = async () => {
+  return true;
+};
+
+export const parseGame = (gameData) => {
+  // Заглушка для парсинга данных игры
+  return gameData || {};
 };
