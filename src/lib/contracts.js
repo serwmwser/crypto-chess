@@ -59,25 +59,20 @@ export const getChessEscrowContract = async () => {
   return new ethers.Contract(config.contracts.chessEscrow, CHESS_ESCROW_ABI, signer);
 };
 
-// Алиасы и форматирование
-export const getEscrow = async () => { return getChessEscrowContract(); };
+export const getEscrow = async () => getChessEscrowContract();
 export const getEscrowView = async () => {
   if (!provider) await connectWallet();
   return new ethers.Contract(config.contracts.chessEscrow, CHESS_ESCROW_ABI, provider);
 };
-export const getEscrowToken = async () => { return getUSDCContract(); };
-export const getToken = async () => { return getUSDCContract(); };
-export const getGameToken = async () => { return getUSDCContract(); };
-export const getCChessExchange = async () => { return null; };
-export const getCChessExchangeView = async () => { return null; };
+export const getEscrowToken = async () => getUSDCContract();
+export const getToken = async () => getUSDCContract();
+export const getGameToken = async () => getUSDCContract();
 
-export const parseUSDC = (amount) => { return ethers.parseUnits(amount.toString(), 6); };
-export const formatUSDC = (wei) => { return ethers.formatUnits(wei, 6); };
-export const formatStake = (wei) => { return formatUSDC(wei); };
-export const shortAddr = (addr) => { if (!addr) return ''; return `${addr.slice(0, 6)}...${addr.slice(-4)}`; };
+export const parseUSDC = (amount) => ethers.parseUnits(amount.toString(), 6);
+export const formatUSDC = (wei) => ethers.formatUnits(wei, 6);
+export const formatStake = (wei) => formatUSDC(wei);
+export const shortAddr = (addr) => addr ? `${addr.slice(0, 6)}...${addr.slice(-4)}` : '';
 
-// Заглушки для сборки (чтобы компоненты не падали)
 export const fetchGames = async () => { try { return []; } catch (e) { return []; } };
-export const escrowReady = async () => { return true; };
-export const cchessReady = async () => { return true; };
-export const parseGame = (gameData) => { return gameData || {}; };
+export const escrowReady = async () => true;
+export const parseGame = (gameData) => gameData || {};

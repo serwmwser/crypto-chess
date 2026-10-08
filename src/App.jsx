@@ -1,84 +1,95 @@
 import React, { useState } from 'react';
-import { ConnectButton, useActiveAccount } from "thirdweb/react";
-import { createThirdwebClient, defineChain } from "thirdweb";
-import { connectWallet, getUSDCContract } from './lib/contracts';
-import { config } from './lib/config';
+import Lobby from './components/Lobby';
+import Profile from './components/Profile';
 
-// Твой Client ID (оставь тот, который ты уже вставил!)
-const client = createThirdwebClient({
-  clientId: "ТВОЙ_РЕАЛЬНЫЙ_CLIENT_ID", 
-});
-
-const chain = defineChain({
-  id: config.network.chainId,
-  name: config.network.name,
-});
+const styles = {
+  app: {
+    minHeight: '100vh',
+    background: 'linear-gradient(135deg, #0a1929 0%, #1a2942 50%, #0d2137 100%)',
+    color: '#f5e6c8',
+    fontFamily: "'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif",
+  },
+  header: {
+    padding: '20px 40px',
+    borderBottom: '1px solid rgba(245, 230, 200, 0.15)',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backdropFilter: 'blur(10px)',
+    backgroundColor: 'rgba(10, 25, 41, 0.7)',
+  },
+  logo: {
+    fontSize: '28px',
+    fontWeight: '700',
+    color: '#f5e6c8',
+    letterSpacing: '1px',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+  },
+  nav: {
+    display: 'flex',
+    gap: '15px',
+  },
+  navButton: {
+    padding: '10px 22px',
+    background: 'transparent',
+    border: '1px solid rgba(245, 230, 200, 0.3)',
+    color: '#f5e6c8',
+    borderRadius: '8px',
+    cursor: 'pointer',
+    fontSize: '15px',
+    fontWeight: '500',
+    transition: 'all 0.2s',
+  },
+  navButtonActive: {
+    padding: '10px 22px',
+    background: 'linear-gradient(135deg, #d4af37 0%, #f5e6c8 100%)',
+    border: '1px solid #d4af37',
+    color: '#0a1929',
+    borderRadius: '8px',
+    cursor: 'pointer',
+    fontSize: '15px',
+    fontWeight: '600',
+    boxShadow: '0 4px 15px rgba(212, 175, 55, 0.3)',
+  },
+  main: {
+    padding: '40px',
+    maxWidth: '1400px',
+    margin: '0 auto',
+  },
+};
 
 function App() {
-  const account = useActiveAccount();
-  const [message, setMessage] = useState('');
-  const [balance, setBalance] = useState('0');
-
-  // Функция получения тестовых токенов (Faucet)
-  const handleGetTokens = async () => {
-    setMessage(' Запрос токенов... Подтвердите транзакцию в MetaMask.');
-    try {
-      // Подключаемся через ethers (наш старый проверенный метод)
-      const signer = await connectWallet();
-      if (!signer) throw new Error("Кошелек не подключен");
-      
-      const tokenContract = await getUSDCContract();
-      
-      // Вызываем функцию faucet() из смарт-контракта
-      const tx = await tokenContract.faucet();
-      await tx.wait();
-      
-      setMessage('✅ Успех! 1000 тестовых USDC зачислены на ваш баланс.');
-      setBalance('1000');
-    } catch (err) {
-      console.error(err);
-      setMessage('❌ Ошибка: ' + (err.reason || err.message || 'Транзакция отменена'));
-    }
-  };
+  const [currentPage, setCurrentPage] = useState('lobby');
 
   return (
-    <div style={{ padding: '40px', fontFamily: 'Arial, sans-serif', textAlign: 'center', maxWidth: '800px', margin: '0 auto' }}>
-      <h1 style={{ color: '#2c3e50', fontSize: '36px' }}>♟️ Crypto Chess</h1>
-      <p style={{ color: '#27ae60', fontWeight: 'bold' }}>✅ Инфраструктура настроена успешно!</p>
-
-      {!account ? (
-        <div style={{ marginTop: '40px', padding: '40px', border: '2px dashed #3498db', borderRadius: '12px', backgroundColor: '#f8f9fa' }}>
-          <h3>Шаг 1: Подключите кошелек</h3>
-          <p>Нажмите кнопку ниже, чтобы подключить MetaMask.</p>
-          <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'center' }}>
-            <ConnectButton client={client} chain={chain} />
-          </div>
+    <div style={styles.app}>
+      <header style={styles.header}>
+        <div style={styles.logo}>
+          <span>♞</span>
+          <span>CRYPTO CHESS</span>
         </div>
-      ) : (
-        <div style={{ marginTop: '40px' }}>
-          <p>Подключено: <strong>{account.address.slice(0,6)}...{account.address.slice(-4)}</strong></p>
-          
-          <div style={{ padding: '30px', border: '2px solid #27ae60', borderRadius: '12px', backgroundColor: '#e8f8f5' }}>
-            <h3>Шаг 2: Получите тестовые токены</h3>
-            <p>Текущий баланс: <strong>{balance} USDC</strong></p>
-            <p style={{ fontSize: '14px', color: '#7f8c8d' }}>
-              (Токены работают в сети Hardhat Local ID 31337. Убедитесь, что MetaMask переключен на эту сеть).
-            </p>
-            <button 
-              onClick={handleGetTokens} 
-              style={{ marginTop: '20px', padding: '12px 24px', fontSize: '16px', cursor: 'pointer', backgroundColor: '#27ae60', color: 'white', border: 'none', borderRadius: '8px' }}
-            >
-              Получить 1000 тестовых USDC
-            </button>
-          </div>
+        <nav style={styles.nav}>
+          <button
+            style={currentPage === 'lobby' ? styles.navButtonActive : styles.navButton}
+            onClick={() => setCurrentPage('lobby')}
+          >
+            Лобби
+          </button>
+          <button
+            style={currentPage === 'profile' ? styles.navButtonActive : styles.navButton}
+            onClick={() => setCurrentPage('profile')}
+          >
+            Профиль
+          </button>
+        </nav>
+      </header>
 
-          {message && (
-            <div style={{ marginTop: '30px', padding: '20px', backgroundColor: '#fff3cd', borderRadius: '8px', fontWeight: 'bold' }}>
-              {message}
-            </div>
-          )}
-        </div>
-      )}
+      <main style={styles.main}>
+        {currentPage === 'lobby' && <Lobby />}
+        {currentPage === 'profile' && <Profile />}
+      </main>
     </div>
   );
 }
