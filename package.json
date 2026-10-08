@@ -1,37 +1,27 @@
 {
   "name": "crypto-chess",
   "private": true,
-  "version": "1.0.0",
+  "version": "0.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview",
-    "server": "node server/relay.js",
-    "compile:contracts": "hardhat --config hardhat.config.cjs compile",
-    "test": "hardhat --config hardhat.config.cjs test",
-    "deploy:token-system": "hardhat --config hardhat.config.cjs run scripts/deploy-token-system.cjs --network bsc",
-    "deploy:cchess-system": "hardhat --config hardhat.config.cjs run scripts/deploy-cchess-system.cjs --network bsc",
-    "transfer:cchess-to-exchange": "hardhat --config hardhat.config.cjs run scripts/transfer-cchess-to-exchange.cjs --network bsc"
+    "preview": "vite preview"
   },
   "dependencies": {
-    "@openzeppelin/contracts": "^5.6.1",
-    "chess.js": "^1.1.0",
-    "ethers": "^6.13.0",
-    "i18next": "^23.7.0",
-    "react": "^19.3.0",
-    "react-dom": "^19.3.0",
-    "react-i18next": "^14.0.0",
-    "thirdweb": "^5.121.6",
-    "ws": "^8.17.0"
+    "ethers": "^6.11.1",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "chess.js": "^1.0.0-beta.8"
   },
   "devDependencies": {
-    "@nomicfoundation/hardhat-chai-matchers": "^2.1.2",
-    "@nomicfoundation/hardhat-ethers": "^3.1.3",
-    "@vitejs/plugin-react": "^4.3.0",
-    "chai": "^4.5.0",
-    "hardhat": "^2.29.1",
-    "solc": "^0.8.28",
-    "vite": "^5.2.0"
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "@openzeppelin/contracts": "^5.0.1",
+    "@types/react": "^18.2.55",
+    "@types/react-dom": "^18.2.19",
+    "@vitejs/plugin-react": "^4.2.1",
+    "dotenv": "^16.4.5",
+    "hardhat": "^2.22.1",
+    "vite": "^5.1.0"
   }
 }
