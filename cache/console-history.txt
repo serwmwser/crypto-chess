@@ -1,7 +1,0 @@
-npm run dev
-cd /workspaces/crypto-chess
-await exchange.grokReserve();
-await exchange.gameTokenInventory();
-);  "0xc25E472bBfC1512470C4ab34546cf6F5D8b143b7"  "CryptoChessExchange",const exchange = await ethers.getContractAt(
-);  ethers.parseEther("1000000")  "0xc25E472bBfC1512470C4ab34546cf6F5D8b143b7",await token.transfer(
-);  "0x2370413909571bA45f77A536A4CaA18a7112C8EE"  "CryptoChessToken",const token = await ethers.getContractAt(
