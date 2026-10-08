@@ -5,7 +5,7 @@ import { createThirdwebClient } from "thirdweb";
 import { ThirdwebProvider } from "thirdweb/react";
 
 const client = createThirdwebClient({
-  clientId: "5a93d210fac8b6a2b7bc01bc4a873518", 
+  clientId: "fc1b95eb7453e110e8e2007b00301f0e", 
 });
 
 ReactDOM.createRoot(document.getElementById('root')).render(
