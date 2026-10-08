@@ -1,4 +1,3 @@
-// Основная конфигурация сети и контрактов
 export const config = {
   network: {
     chainId: 31337, 
@@ -11,26 +10,14 @@ export const config = {
   }
 };
 
-// --- ЭКСПОРТЫ ДЛЯ СОВМЕСТИМОСТИ С ДРУГИМИ ФАЙЛАМИ ---
-
+// Все экспорты для совместимости с компонентами
 export const ESCROW_ADDRESS = config.contracts.chessEscrow;
-
-export const DURATIONS = {
-  180: '3 мин',
-  300: '5 мин',
-  900: '15 мин',
-  1800: '30 мин',
-  3600: '1 час'
-};
-
+export const DURATIONS = { 180: '3 мин', 300: '5 мин', 900: '15 мин', 1800: '30 мин', 3600: '1 час' };
 export const RELAY_URL = 'ws://localhost:3001';
 export const FREE_TIME_CONTROLS = [180, 300, 900, 1800, 3600];
-
 export const TOKEN_ADDRESS = config.contracts.usdc;
 export const TOKEN_BUY_URL = 'https://faucet.polygon.technology/';
 export const TOKEN_EXPLORER_URL = 'https://amoy.polygonscan.com/';
-
-// --- ДОБАВЛЕНО ДЛЯ Profile.jsx (ФИНАЛЬНЫЕ ЗАГЛУШКИ) ---
-export const BNB_CHAIN_ID = 56; // ID сети BSC
-export const CCHESS_EXCHANGE_ADDRESS = "0x0000000000000000000000000000000000000000"; // Заглушка
-export const CCHESS_TOKEN_ADDRESS = "0x0000000000000000000000000000000000000000"; // Заглушка
+export const BNB_CHAIN_ID = 56;
+export const CCHESS_EXCHANGE_ADDRESS = "0x0000000000000000000000000000000000000000";
+export const CCHESS_TOKEN_ADDRESS = "0x0000000000000000000000000000000000000000";
