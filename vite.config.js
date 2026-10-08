@@ -3,5 +3,6 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [react()],
-  base: '/crypto-chess/',
+  // Эта строка критически важна для GitHub Pages!
+  base: '/crypto-chess/', 
 })
