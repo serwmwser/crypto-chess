@@ -1,0 +1,57 @@
+# Зависимости
+node_modules/
+.pnp
+.pnp.js
+
+# Папки Hardhat (компиляция контрактов)
+artifacts/
+cache/
+typechain-types/
+typechain/
+
+# Переменные окружения (ключи)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Сборка Vite/React
+dist/
+build/
+out/
+
+# Логи
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Редакторы и IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Тесты и покрытие
+coverage/
+.nyc_output/
+
+# Временные файлы
+*.log
+*.tmp
+.temp/
+
+# Hardhat специфичное
+hh-artifacts/
+hh-cache/
+
+# OpenZeppelin артефакты (если есть)
+artifacts/@openzeppelin/
+
+# Серверные логи
+server/logs/
+server/*.log
